@@ -1,6 +1,6 @@
 # polymurhash-zig
 
-Zig port of [PolymurHash](https://github.com/orlp/polymur-hash) by [Orsen Peters](https://github.com/orlp).
+Zig port of [PolymurHash](https://github.com/orlp/polymur-hash) by [Orson Peters](https://github.com/orlp).
 
 ## Usage
 
