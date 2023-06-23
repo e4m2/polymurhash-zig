@@ -1,4 +1,4 @@
-//! PolymurHash 1.0, 64-bit universal hash function designed for use in hash tables.
+//! PolymurHash 2.0, 64-bit universal hash function designed for use in hash tables.
 //!
 //! Almost universality:
 //! When initialized with an independently chosen random seed, for any distinct pair of inputs of up to n bytes the probability that they hash to the same value is at most n * 2^-60.2.
@@ -104,15 +104,15 @@ pub fn initFromParams(k_seed: u64, s_seed: u64) Self {
 }
 
 pub fn hash(self: Self, tweak: u64, input: []const u8) u64 {
-    return if (input.len == 0)
-        0
-    else
-        mix(self.hashPoly611(tweak, input)) +% self.s;
+    return mix(self.hashPoly611(tweak, input)) +% self.s;
 }
 
-/// Loads 1 to 8 bytes from `data` with length `data.len` > 0 as a 64-bit little-endian integer.
-fn readIntLittle1to8(data: []const u8) u64 {
+/// Reads 0 to 8 bytes from `data` as a 64-bit little-endian integer.
+fn readIntLittle0to8(data: []const u8) u64 {
     if (data.len < 4) {
+        if (data.len == 0) {
+            return 0;
+        }
         var v: u64 = data[0];
         v |= @as(u64, data[data.len / 2]) << @intCast(u6, 8 * (data.len / 2));
         v |= @as(u64, data[data.len - 1]) << @intCast(u6, 8 * (data.len - 1));
@@ -155,7 +155,7 @@ fn hashPoly611(self: Self, tweak: u64, input: []const u8) u64 {
     var poly_acc = tweak;
 
     if (buf.len <= 7) {
-        m[0] = readIntLittle1to8(buf);
+        m[0] = readIntLittle0to8(buf);
         return poly_acc +% reduce611(math.mulWide(u64, self.k +% m[0], self.k2 +% buf.len));
     }
 
@@ -206,7 +206,7 @@ fn hashPoly611(self: Self, tweak: u64, input: []const u8) u64 {
         return poly_acc +% reduce611(t1 +% t2 +% t3);
     }
 
-    m[0] = readIntLittle1to8(buf);
+    m[0] = readIntLittle0to8(buf);
     return poly_acc +% reduce611(math.mulWide(u64, self.k +% m[0], self.k2 +% buf.len));
 }
 
@@ -315,7 +315,7 @@ test {
         "oo70ed77jci4bgodhnyf37axrx4f8gf8qs94f4l9xi9h0jkdl2ozoi2p7q7qu1945l21dzj6rhvqearzrmblfo3ljjldj0m9fue",
     };
     const reference_values = [_]u64{
-        0x0000000000000000, 0xd16d059771c65e13, 0x5ee4e0c09f562f87, 0x535b5311db007b0b,
+        0x1a6ef9f9d6c576fb, 0xd16d059771c65e13, 0x5ee4e0c09f562f87, 0x535b5311db007b0b,
         0xd17124f14bd16b5d, 0xe84c87105c5b5cad, 0xb16ce684b89df9c0, 0x656525cace200667,
         0x92b460794885d16d, 0xe6cc0fd9725b46b9, 0xc875ade1929bc93d, 0x68a2686ced37268a,
         0x1d1809fd7e7e14ef, 0x699b8f31fc40c137, 0xd10dca2605654d2d, 0xd6bc75cb729f18d7,
