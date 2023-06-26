@@ -184,7 +184,7 @@ fn hashPoly611(self: Self, tweak: u64, input: []const u8) u64 {
         }
         const k14 = reduce611(math.mulWide(u64, self.k7, self.k7));
         const hk14 = reduce611(math.mulWide(u64, reduce611(h), k14));
-        poly_acc += reduce611(hk14);
+        poly_acc +%= reduce611(hk14);
     }
 
     if (buf.len >= 8) {
