@@ -114,21 +114,21 @@ fn readIntLittle0to8(data: []const u8) u64 {
             return 0;
         }
         var v: u64 = data[0];
-        v |= @as(u64, data[data.len / 2]) << @intCast(u6, 8 * (data.len / 2));
-        v |= @as(u64, data[data.len - 1]) << @intCast(u6, 8 * (data.len - 1));
+        v |= @as(u64, data[data.len / 2]) << @intCast(8 * (data.len / 2));
+        v |= @as(u64, data[data.len - 1]) << @intCast(8 * (data.len - 1));
         return v;
     }
 
     const lo: u64 = mem.readIntLittle(u32, data[0..4]);
     const hi: u64 = mem.readIntLittle(u32, data[data.len - 4 ..][0..4]);
-    return lo | (hi << @intCast(u6, 8 * (data.len - 4)));
+    return lo | (hi << @intCast(8 * (data.len - 4)));
 }
 
 /// 2^61 - 1, a Mersenne prime.
 const p611 = (1 << 61) - 1;
 
 fn reduce611(x: anytype) u64 {
-    return (@truncate(u64, x) & p611) +% @truncate(u64, x >> 61);
+    return (@as(u64, @truncate(x)) & p611) +% @as(u64, @truncate(x >> 61));
 }
 
 // Completely arbitrary, these are taken from SHA-2, and are the fractional bits of sqrt(p), p = 2, 3, 5, 7.
@@ -169,7 +169,7 @@ fn hashPoly611(self: Self, tweak: u64, input: []const u8) u64 {
         var h: u64 = 0;
         while (true) {
             for (&m, 0..) |*me, i| {
-                me.* = mem.readIntLittle(u64, buf[7 * i ..][0..8]) & 0x00FFFFFFFFFFFFFF;
+                me.* = @as(u56, @truncate(mem.readIntLittle(u64, buf[7 * i ..][0..8])));
             }
             const t0 = math.mulWide(u64, self.k +% m[0], k6 +% m[1]);
             const t1 = math.mulWide(u64, self.k2 +% m[2], k5 +% m[3]);
@@ -188,18 +188,18 @@ fn hashPoly611(self: Self, tweak: u64, input: []const u8) u64 {
     }
 
     if (buf.len >= 8) {
-        m[0] = mem.readIntLittle(u64, buf[0..8]) & 0x00FFFFFFFFFFFFFF;
-        m[1] = mem.readIntLittle(u64, buf[(buf.len - 7) / 2 ..][0..8]) & 0x00FFFFFFFFFFFFFF;
+        m[0] = @as(u56, @truncate(mem.readIntLittle(u64, buf[0..8])));
+        m[1] = @as(u56, @truncate(mem.readIntLittle(u64, buf[(buf.len - 7) / 2 ..][0..8])));
         m[2] = mem.readIntLittle(u64, buf[buf.len - 8 ..][0..8]) >> 8;
         const t0 = math.mulWide(u64, self.k2 +% m[0], self.k7 +% m[1]);
         const t1 = math.mulWide(u64, self.k +% m[2], k3 +% buf.len);
         if (buf.len <= 21) {
             return poly_acc +% reduce611(t0 +% t1);
         }
-        m[3] = mem.readIntLittle(u64, buf[7..][0..8]) & 0x00FFFFFFFFFFFFFF;
-        m[4] = mem.readIntLittle(u64, buf[14..][0..8]) & 0x00FFFFFFFFFFFFFF;
-        m[5] = mem.readIntLittle(u64, buf[buf.len - 21 ..][0..8]) & 0x00FFFFFFFFFFFFFF;
-        m[6] = mem.readIntLittle(u64, buf[buf.len - 14 ..][0..8]) & 0x00FFFFFFFFFFFFFF;
+        m[3] = @as(u56, @truncate(mem.readIntLittle(u64, buf[7..][0..8])));
+        m[4] = @as(u56, @truncate(mem.readIntLittle(u64, buf[14..][0..8])));
+        m[5] = @as(u56, @truncate(mem.readIntLittle(u64, buf[buf.len - 21 ..][0..8])));
+        m[6] = @as(u56, @truncate(mem.readIntLittle(u64, buf[buf.len - 14 ..][0..8])));
         const t0r = reduce611(t0);
         const t2 = math.mulWide(u64, self.k2 +% m[3], self.k7 +% m[4]);
         const t3 = math.mulWide(u64, t0r +% m[5], k4 +% m[6]);
