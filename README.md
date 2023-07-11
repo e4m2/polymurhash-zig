@@ -23,7 +23,7 @@ Zig port of [PolymurHash](https://github.com/orlp/polymur-hash) by [Orson Peters
     }
     ```
 
-    If unsure what to fill out for `<package hash>`, set it to `12200000000000000000000000000000000000000000000000000000000000000000` and Zig will tell you the correct value in an error message.
+    If unsure what to fill out for `<package hash>`, remove the field entirely and Zig will tell you the correct value in an error message.
 
     </details>
 
