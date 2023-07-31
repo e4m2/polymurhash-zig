@@ -4,7 +4,7 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    const main_source_file = std.Build.FileSource.relative("src/Polymur.zig");
+    const main_source_file = std.Build.LazyPath.relative("src/Polymur.zig");
 
     _ = b.addModule("polymurhash", .{ .source_file = main_source_file });
 
