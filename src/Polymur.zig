@@ -34,7 +34,7 @@ pub fn initFromParams(k_seed: u64, s_seed: u64) Self {
     // pow37_lut[i] = 37^(2^i) mod (2^61 - 1)
     // Could be replaced by a 512 byte LUT, costs ~400 byte overhead but 2x
     // faster seeding. However, seeding is rather rare, so I chose not to.
-    var pow37_lut = comptime lut: {
+    const pow37_lut = comptime lut: {
         var lut: [64]u64 = undefined;
         lut[0] = 37;
         lut[32] = 559096694736811184;
@@ -119,8 +119,8 @@ fn readIntLittle0to8(data: []const u8) u64 {
         return v;
     }
 
-    const lo: u64 = mem.readIntLittle(u32, data[0..4]);
-    const hi: u64 = mem.readIntLittle(u32, data[data.len - 4 ..][0..4]);
+    const lo: u64 = mem.readInt(u32, data[0..4], .little);
+    const hi: u64 = mem.readInt(u32, data[data.len - 4 ..][0..4], .little);
     return lo | (hi << @intCast(8 * (data.len - 4)));
 }
 
@@ -169,7 +169,7 @@ fn hashPoly611(self: Self, tweak: u64, input: []const u8) u64 {
         var h: u64 = 0;
         while (true) {
             for (&m, 0..) |*me, i| {
-                me.* = @as(u56, @truncate(mem.readIntLittle(u64, buf[7 * i ..][0..8])));
+                me.* = @as(u56, @truncate(mem.readInt(u64, buf[7 * i ..][0..8], .little)));
             }
             const t0 = math.mulWide(u64, self.k +% m[0], k6 +% m[1]);
             const t1 = math.mulWide(u64, self.k2 +% m[2], k5 +% m[3]);
@@ -188,18 +188,18 @@ fn hashPoly611(self: Self, tweak: u64, input: []const u8) u64 {
     }
 
     if (buf.len >= 8) {
-        m[0] = @as(u56, @truncate(mem.readIntLittle(u64, buf[0..8])));
-        m[1] = @as(u56, @truncate(mem.readIntLittle(u64, buf[(buf.len - 7) / 2 ..][0..8])));
-        m[2] = mem.readIntLittle(u64, buf[buf.len - 8 ..][0..8]) >> 8;
+        m[0] = @as(u56, @truncate(mem.readInt(u64, buf[0..8], .little)));
+        m[1] = @as(u56, @truncate(mem.readInt(u64, buf[(buf.len - 7) / 2 ..][0..8], .little)));
+        m[2] = mem.readInt(u64, buf[buf.len - 8 ..][0..8], .little) >> 8;
         const t0 = math.mulWide(u64, self.k2 +% m[0], self.k7 +% m[1]);
         const t1 = math.mulWide(u64, self.k +% m[2], k3 +% buf.len);
         if (buf.len <= 21) {
             return poly_acc +% reduce611(t0 +% t1);
         }
-        m[3] = @as(u56, @truncate(mem.readIntLittle(u64, buf[7..][0..8])));
-        m[4] = @as(u56, @truncate(mem.readIntLittle(u64, buf[14..][0..8])));
-        m[5] = @as(u56, @truncate(mem.readIntLittle(u64, buf[buf.len - 21 ..][0..8])));
-        m[6] = @as(u56, @truncate(mem.readIntLittle(u64, buf[buf.len - 14 ..][0..8])));
+        m[3] = @as(u56, @truncate(mem.readInt(u64, buf[7..][0..8], .little)));
+        m[4] = @as(u56, @truncate(mem.readInt(u64, buf[14..][0..8], .little)));
+        m[5] = @as(u56, @truncate(mem.readInt(u64, buf[buf.len - 21 ..][0..8], .little)));
+        m[6] = @as(u56, @truncate(mem.readInt(u64, buf[buf.len - 14 ..][0..8], .little)));
         const t0r = reduce611(t0);
         const t2 = math.mulWide(u64, self.k2 +% m[3], self.k7 +% m[4]);
         const t3 = math.mulWide(u64, t0r +% m[5], k4 +% m[6]);
